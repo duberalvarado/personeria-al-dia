@@ -176,6 +176,41 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     margin-bottom: 10px;
 }
 
+/* Base jurídica */
+.legal-card {
+    background: linear-gradient(135deg, #f3f8fc 0%, #ffffff 100%);
+    border: 1px solid #d5e2eb;
+    border-left: 5px solid #174f7a;
+    border-radius: 15px;
+    padding: 19px 21px;
+    margin-top: 26px;
+    box-shadow: 0 7px 20px rgba(31,61,84,.05);
+}
+.legal-kicker {
+    color: #23844d;
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+.legal-title {
+    color: #123f63;
+    font-size: 19px;
+    font-weight: 850;
+    margin-top: 4px;
+}
+.legal-text {
+    color: #5f707c;
+    font-size: 13px;
+    line-height: 1.55;
+    margin-top: 7px;
+}
+.legal-meta {
+    color: #6e7e89;
+    font-size: 12px;
+    margin-top: 9px;
+}
+
 .email-card {
     background: linear-gradient(135deg, #eef8f2 0%, #f9fcfa 100%);
     border: 1px solid #cbe4d4;
@@ -403,6 +438,54 @@ predial correspondiente a la vigencia 2027.
 """,
     unsafe_allow_html=True,
 )
+
+# ============================================================
+# BASE JURÍDICA DE LA MEDIDA
+# ============================================================
+
+resolucion = Path("RESOLUCION_146_2026.pdf")
+
+st.markdown(
+    """
+<div class="legal-card">
+<div class="legal-kicker">Documento de respaldo</div>
+<div class="legal-title">📄 Resolución No. 146 de 2026</div>
+<div class="legal-text">
+La consulta se relaciona con la medida administrativa adoptada por la Alcaldía
+Municipal de Concepción frente a un error material en la parametrización de la
+fórmula de cálculo del Impuesto Predial Unificado para la vigencia fiscal 2026.
+La resolución establece la compensación de los valores pagados en exceso mediante
+un abono al impuesto predial correspondiente a la vigencia 2027.
+</div>
+<div class="legal-meta"><strong>Fecha:</strong> 30 de junio de 2026 · <strong>Entidad:</strong> Alcaldía Municipal de Concepción, Santander</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+if resolucion.exists():
+    with open(resolucion, "rb") as archivo_pdf:
+        st.download_button(
+            "📥 Descargar Resolución No. 146 de 2026",
+            data=archivo_pdf.read(),
+            file_name="Resolucion_146_de_2026.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+else:
+    st.warning("El documento de respaldo no está disponible en este momento.")
+
+with st.expander("📌 ¿Qué establece la Resolución 146 de 2026?"):
+    st.markdown(
+        """
+- Reconoce formalmente un **error material en la parametrización de la fórmula de cálculo** del Impuesto Predial Unificado aplicado en el municipio para la vigencia fiscal 2026.
+- Dispone la **compensación de los valores pagados en exceso** mediante su aplicación como abono al impuesto predial de la vigencia 2027.
+- Ordena a las dependencias municipales correspondientes identificar los propietarios afectados y adelantar los procedimientos administrativos necesarios.
+- El documento contiene, en sus páginas anexas, el listado de predios, propietarios y valores de devolución asociados a la medida.
+
+**Fuente:** Resolución No. 146 de 2026, Alcaldía Municipal de Concepción, Santander.
+"""
+    )
 
 # ============================================================
 # DATOS PERSONALES
