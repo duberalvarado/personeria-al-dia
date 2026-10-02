@@ -1,3 +1,4 @@
+# Tema claro fijo para Personería al Día
 [theme]
 base = "light"
 primaryColor = "#174f7a"
@@ -5,3 +6,10 @@ backgroundColor = "#f4f7fa"
 secondaryBackgroundColor = "#ffffff"
 textColor = "#173f61"
 font = "sans serif"
+
+[client]
+# Oculta el menú de configuración (incluido el selector de tema claro/oscuro)
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
