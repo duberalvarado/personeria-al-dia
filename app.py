@@ -1,8 +1,8 @@
-
 import streamlit as st
 import pandas as pd
 import unicodedata
 import urllib.parse
+from pathlib import Path
 
 # ============================================================
 # CONFIGURACIÓN
@@ -19,287 +19,262 @@ st.set_page_config(
 # ESTILOS
 # ============================================================
 
-st.markdown("""
+st.markdown(
+r"""
 <style>
-    /* Página */
-    .stApp {
-        background: #f4f7fa;
-    }
+.stApp {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(35,132,77,.09), transparent 27%),
+        radial-gradient(circle at 92% 0%, rgba(23,79,122,.12), transparent 30%),
+        linear-gradient(180deg, #edf4f8 0%, #f8fafc 48%, #eef4f8 100%);
+}
+.main .block-container {
+    max-width: 1160px;
+    padding: 28px 28px 55px 28px;
+}
+#MainMenu, footer { visibility: hidden; }
 
-    .main .block-container {
-        max-width: 1120px;
-        padding: 24px 28px 50px 28px;
-    }
+.brand-bar {
+    background: linear-gradient(115deg, #123f63 0%, #1d638b 68%, #23844d 100%);
+    border-radius: 18px;
+    padding: 20px 24px;
+    color: white;
+    box-shadow: 0 12px 30px rgba(23,79,122,.16);
+    margin-bottom: 24px;
+}
+.brand-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
+.brand-subtitle { font-size: 13px; opacity: .9; margin-top: 5px; }
 
-    #MainMenu, footer {
-        visibility: hidden;
-    }
+.hero {
+    background: rgba(255,255,255,.92);
+    border: 1px solid #dfe8ef;
+    border-radius: 18px;
+    padding: 28px 30px 24px 30px;
+    box-shadow: 0 10px 28px rgba(31,61,84,.06);
+    margin-bottom: 18px;
+}
+.hero-kicker {
+    color: #23844d;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.hero-title {
+    color: #123f63;
+    font-size: 34px;
+    font-weight: 850;
+    margin-top: 5px;
+}
+.hero-text {
+    color: #647583;
+    font-size: 15px;
+    line-height: 1.55;
+    margin-top: 7px;
+}
 
-    /* Encabezado */
-    .topbar {
-        background: #174f7a;
-        border-radius: 14px;
-        padding: 18px 24px;
-        color: white;
-        box-shadow: 0 5px 18px rgba(23, 79, 122, .14);
-        margin-bottom: 22px;
-    }
+.search-card {
+    background: white;
+    border: 1px solid #dbe5ec;
+    border-radius: 16px;
+    padding: 20px 22px 16px 22px;
+    box-shadow: 0 8px 22px rgba(31,61,84,.06);
+    margin-bottom: 18px;
+}
+.search-title {
+    color: #123f63;
+    font-size: 19px;
+    font-weight: 800;
+}
+.search-help {
+    color: #7a8792;
+    font-size: 13px;
+    margin-top: 4px;
+}
 
-    .topbar-title {
-        font-size: 23px;
-        font-weight: 800;
-        line-height: 1.1;
-    }
+div[data-testid="stSelectbox"] > div > div {
+    border-radius: 12px !important;
+    border: 2px solid #d5e0e8 !important;
+    background: #fbfdff !important;
+    min-height: 48px !important;
+    box-shadow: 0 4px 14px rgba(31,61,84,.05);
+}
+div[data-testid="stSelectbox"] > div > div:focus-within {
+    border-color: #2877a9 !important;
+    box-shadow: 0 0 0 3px rgba(40,119,169,.11) !important;
+}
 
-    .topbar-subtitle {
-        font-size: 13px;
-        opacity: .88;
-        margin-top: 5px;
-    }
+.notice {
+    background: #fff9e9;
+    border: 1px solid #f0dfad;
+    border-left: 5px solid #e0a62a;
+    border-radius: 12px;
+    padding: 15px 18px;
+    color: #6a5525;
+    line-height: 1.5;
+    font-size: 13px;
+    margin: 18px 0;
+}
 
-    /* Presentación */
-    .intro {
-        background: white;
-        border: 1px solid #e0e7ed;
-        border-radius: 14px;
-        padding: 30px 32px 25px 32px;
-        box-shadow: 0 4px 16px rgba(31, 61, 84, .05);
-        margin-bottom: 18px;
-    }
+.result-banner {
+    background: linear-gradient(115deg, #174f7a 0%, #1e648d 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 19px 22px;
+    box-shadow: 0 9px 24px rgba(23,79,122,.15);
+    margin: 20px 0 16px 0;
+}
+.result-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: .78;
+}
+.result-name {
+    font-size: 23px;
+    font-weight: 850;
+    margin-top: 4px;
+}
 
-    .intro-kicker {
-        color: #23844d;
-        font-size: 12px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: .8px;
-        margin-bottom: 8px;
-    }
+.saldo-card {
+    background: linear-gradient(135deg, #eef9f2 0%, #ffffff 100%);
+    border: 1px solid #c9e4d2;
+    border-top: 5px solid #23844d;
+    border-radius: 16px;
+    padding: 20px 22px;
+    box-shadow: 0 8px 22px rgba(35,132,77,.07);
+    margin-top: 16px;
+}
+.saldo-label {
+    color: #28704a;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+}
+.saldo-value {
+    color: #17633b;
+    font-size: 31px;
+    font-weight: 850;
+    margin-top: 4px;
+}
+.saldo-note {
+    color: #688073;
+    font-size: 12px;
+    margin-top: 4px;
+}
 
-    .intro-title {
-        color: #173f61;
-        font-size: 32px;
-        font-weight: 800;
-        margin: 0;
-    }
+.section-title {
+    color: #123f63;
+    font-size: 19px;
+    font-weight: 800;
+    margin: 27px 0 4px 0;
+}
+.section-help {
+    color: #7a8792;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
 
-    .intro-text {
-        color: #667684;
-        font-size: 15px;
-        margin-top: 8px;
-        line-height: 1.55;
-    }
+/* Base jurídica */
+.legal-card {
+    background: linear-gradient(135deg, #f3f8fc 0%, #ffffff 100%);
+    border: 1px solid #d5e2eb;
+    border-left: 5px solid #174f7a;
+    border-radius: 15px;
+    padding: 19px 21px;
+    margin-top: 26px;
+    box-shadow: 0 7px 20px rgba(31,61,84,.05);
+}
+.legal-kicker {
+    color: #23844d;
+    font-size: 11px;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+.legal-title {
+    color: #123f63;
+    font-size: 19px;
+    font-weight: 850;
+    margin-top: 4px;
+}
+.legal-text {
+    color: #5f707c;
+    font-size: 13px;
+    line-height: 1.55;
+    margin-top: 7px;
+}
+.legal-meta {
+    color: #6e7e89;
+    font-size: 12px;
+    margin-top: 9px;
+}
 
-    /* Buscador */
-    .search-card {
-        background: white;
-        border: 1px solid #dfe7ee;
-        border-radius: 14px;
-        padding: 22px 24px 16px 24px;
-        box-shadow: 0 4px 16px rgba(31, 61, 84, .05);
-        margin-bottom: 18px;
-    }
+.email-card {
+    background: linear-gradient(135deg, #eef8f2 0%, #f9fcfa 100%);
+    border: 1px solid #cbe4d4;
+    border-left: 5px solid #23844d;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 24px;
+}
+.email-title {
+    color: #1e7043;
+    font-size: 18px;
+    font-weight: 800;
+}
+.email-text {
+    color: #63766a;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 4px;
+}
 
-    .search-title {
-        color: #173f61;
-        font-size: 18px;
-        font-weight: 800;
-        margin-bottom: 3px;
-    }
+.stButton > button, .stLinkButton > a {
+    border-radius: 10px !important;
+    font-weight: 750 !important;
+    min-height: 44px !important;
+}
 
-    .search-help {
-        color: #7a8792;
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
+div[data-testid="stMetric"] {
+    background: rgba(255,255,255,.94);
+    border: 1px solid #dfe7ed;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 6px 18px rgba(31,61,84,.055);
+}
 
-    div[data-testid="stTextInput"] input {
-        background: #f8fafc !important;
-        border: 2px solid #d6e0e8 !important;
-        border-radius: 10px !important;
-        color: #173f61 !important;
-        font-size: 16px !important;
-        padding: 13px 15px !important;
-    }
+div[data-testid="stDataFrame"] {
+    border-radius: 12px;
+    overflow: hidden;
+}
 
-    div[data-testid="stTextInput"] input:focus {
-        border-color: #2877a9 !important;
-        box-shadow: 0 0 0 3px rgba(40,119,169,.10) !important;
-    }
+div[data-testid="stExpander"] {
+    border-radius: 12px !important;
+    border-color: #dce5ec !important;
+    background: rgba(255,255,255,.78);
+}
 
-    /* Aviso */
-    .notice {
-        background: #fff9e9;
-        border: 1px solid #f1dfaa;
-        border-left: 5px solid #e0a62a;
-        border-radius: 10px;
-        padding: 15px 18px;
-        color: #695526;
-        margin: 18px 0;
-        font-size: 13px;
-        line-height: 1.5;
-    }
+.footer {
+    text-align: center;
+    color: #87939c;
+    font-size: 12px;
+    border-top: 1px solid #dfe6ec;
+    padding-top: 20px;
+    margin-top: 38px;
+}
 
-    .notice strong {
-        color: #7b5b0c;
-    }
-
-    /* Resultados */
-    .results-head {
-        color: #173f61;
-        font-size: 18px;
-        font-weight: 800;
-        margin: 22px 0 5px 0;
-    }
-
-    .results-count {
-        color: #778692;
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-
-    .selected-person {
-        background: #174f7a;
-        color: white;
-        border-radius: 12px;
-        padding: 18px 22px;
-        margin: 20px 0 15px 0;
-    }
-
-    .selected-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: .8px;
-        opacity: .8;
-    }
-
-    .selected-name {
-        font-size: 22px;
-        font-weight: 800;
-        margin-top: 4px;
-    }
-
-    /* Métricas - estilos aislados para evitar conflictos con Streamlit */
-    .pa-metric {
-        background: #ffffff !important;
-        border: 1px solid #e0e7ed !important;
-        border-radius: 12px !important;
-        padding: 18px !important;
-        min-height: 112px !important;
-        box-shadow: 0 3px 12px rgba(31, 61, 84, .05) !important;
-        color: #173f61 !important;
-    }
-
-    .pa-metric-blue {
-        border-top: 4px solid #2877a9 !important;
-    }
-
-    .pa-metric-orange {
-        border-top: 4px solid #e0a62a !important;
-    }
-
-    .pa-metric-green {
-        border-top: 4px solid #23844d !important;
-    }
-
-    .pa-metric .pa-metric-label,
-    .pa-metric .pa-metric-value {
-        opacity: 1 !important;
-        visibility: visible !important;
-        background: transparent !important;
-        text-shadow: none !important;
-    }
-
-    .pa-metric .pa-metric-label {
-        color: #52616d !important;
-        -webkit-text-fill-color: #52616d !important;
-        font-size: 11px !important;
-        text-transform: uppercase !important;
-        font-weight: 800 !important;
-        letter-spacing: .4px !important;
-    }
-
-    .pa-metric .pa-metric-value {
-        color: #173f61 !important;
-        -webkit-text-fill-color: #173f61 !important;
-        font-size: 23px !important;
-        font-weight: 800 !important;
-        margin-top: 7px !important;
-        line-height: 1.2 !important;
-    }
-
-    /* Secciones */
-    .section-title {
-        color: #173f61;
-        font-size: 18px;
-        font-weight: 800;
-        margin: 25px 0 5px 0;
-    }
-
-    .section-subtitle {
-        color: #7a8792;
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-
-    /* Correo */
-    .email-card {
-        background: #eef8f2;
-        border: 1px solid #cbe5d4;
-        border-radius: 12px;
-        padding: 20px;
-        margin-top: 22px;
-    }
-
-    .email-title {
-        color: #1e7043;
-        font-size: 18px;
-        font-weight: 800;
-    }
-
-    .email-text {
-        color: #63756a;
-        font-size: 13px;
-        margin-top: 5px;
-        line-height: 1.5;
-    }
-
-    /* Botón */
-    .stLinkButton a {
-        border-radius: 9px !important;
-        font-weight: 700 !important;
-    }
-
-    /* Footer */
-    .footer {
-        text-align: center;
-        color: #87939c;
-        font-size: 12px;
-        border-top: 1px solid #dfe6ec;
-        padding-top: 20px;
-        margin-top: 35px;
-    }
-
-    /* Móvil */
-    @media (max-width: 700px) {
-        .main .block-container {
-            padding: 15px 14px 35px 14px;
-        }
-
-        .intro {
-            padding: 24px 20px;
-        }
-
-        .intro-title {
-            font-size: 27px;
-        }
-
-        .topbar {
-            padding: 16px 18px;
-        }
-    }
+@media (max-width: 700px) {
+    .main .block-container { padding: 14px 14px 35px 14px; }
+    .hero { padding: 23px 19px 20px 19px; }
+    .hero-title { font-size: 28px; }
+    .brand-bar { padding: 16px 18px; }
+}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # ============================================================
 # FUNCIONES
@@ -307,26 +282,46 @@ st.markdown("""
 
 @st.cache_data
 def cargar_datos():
-    df = pd.read_csv("datos_dashboard_beneficiarios.csv")
+    archivo = Path("datos_dashboard_beneficiarios.csv")
 
-    numericas = [
+    if not archivo.exists():
+        return None, "No se encontró 'datos_dashboard_beneficiarios.csv'."
+
+    try:
+        df = pd.read_csv(archivo, encoding="utf-8")
+    except UnicodeDecodeError:
+        try:
+            df = pd.read_csv(archivo, encoding="latin-1")
+        except Exception as error:
+            return None, f"No se pudo leer el archivo de datos: {error}"
+    except Exception as error:
+        return None, f"No se pudo leer el archivo de datos: {error}"
+
+    requeridas = [
+        "NOMBRE",
+        "DIRECCION",
+        "FACTURA",
         "VALOR_PAGADO",
         "LO_QUE_DEBIO_COBRAR",
         "DEVOLUCION",
     ]
+    faltantes = [col for col in requeridas if col not in df.columns]
 
-    for col in numericas:
-        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    if faltantes:
+        return None, "Faltan columnas requeridas: " + ", ".join(faltantes)
 
-    for col in ["NOMBRE", "DIRECCION"]:
-        df[col] = df[col].fillna("").astype(str).str.strip()
+    df["NOMBRE"] = df["NOMBRE"].fillna("").astype(str).str.strip()
+    df["DIRECCION"] = df["DIRECCION"].fillna("").astype(str).str.strip()
 
     df = df[
         (df["NOMBRE"] != "") &
         (df["NOMBRE"].str.lower() != "nan")
     ].copy()
 
-    return df
+    for col in ["VALOR_PAGADO", "LO_QUE_DEBIO_COBRAR", "DEVOLUCION"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+
+    return df, None
 
 
 def normalizar(texto):
@@ -342,68 +337,64 @@ def dinero(valor):
     return f"${valor:,.0f}".replace(",", ".")
 
 
-def coincide_por_palabras(nombre, busqueda):
-    """
-    Permite buscar:
-    DIAZ
-    MARCO
-    MARCO DIAZ
-    MARCO ANTONIO DIAZ
-    sin importar mayúsculas, tildes ni el orden de las palabras.
-    """
-    nombre_norm = normalizar(nombre)
-    palabras = [p for p in normalizar(busqueda).split() if p]
-
-    return all(palabra in nombre_norm for palabra in palabras)
-
-
 # ============================================================
 # DATOS
 # ============================================================
 
-df = cargar_datos()
+df, error = cargar_datos()
+
+if error:
+    st.error(error)
+    st.info(
+        "Verifique que 'datos_dashboard_beneficiarios.csv' "
+        "esté en la misma carpeta que app.py."
+    )
+    st.stop()
+
+nombres = sorted(
+    df["NOMBRE"].drop_duplicates().tolist(),
+    key=lambda x: normalizar(x)
+)
 
 # ============================================================
 # ENCABEZADO
 # ============================================================
 
-logo_col, titulo_col = st.columns([1, 4])
+col_logo, col_brand = st.columns([1, 4], vertical_alignment="center")
 
-with logo_col:
-    try:
-        st.image("logo_personeria.png", width=170)
-    except Exception:
-        st.markdown("### Personería al Día")
+with col_logo:
+    logo = Path("logo_personeria.png")
+    if logo.exists():
+        st.image(str(logo), width=175)
+    else:
+        st.subheader("Personería al Día")
 
-with titulo_col:
+with col_brand:
     st.markdown(
         """
-        <div class="topbar">
-            <div class="topbar-title">Personería al Día</div>
-            <div class="topbar-subtitle">
-                Personería Municipal de Concepción, Santander
-            </div>
-        </div>
-        """,
+<div class="brand-bar">
+<div class="brand-title">Personería al Día</div>
+<div class="brand-subtitle">Personería Municipal de Concepción, Santander</div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
 # ============================================================
-# INTRODUCCIÓN
+# HERO
 # ============================================================
 
 st.markdown(
     """
-    <div class="intro">
-        <div class="intro-kicker">Impuesto Predial</div>
-        <div class="intro-title">Consulta de saldo a favor</div>
-        <div class="intro-text">
-            Consulte de manera sencilla la información registrada
-            sobre el valor pagado, el valor que debía cobrarse y
-            el saldo a favor correspondiente a la vigencia 2027.
-        </div>
-    </div>
-    """,
+<div class="hero">
+<div class="hero-kicker">Impuesto Predial · Vigencia 2027</div>
+<div class="hero-title">Consulta de saldo a favor</div>
+<div class="hero-text">
+Consulte de forma sencilla la información registrada sobre el valor
+pagado, el valor que debía cobrarse y el saldo a favor.
+</div>
+</div>
+""",
     unsafe_allow_html=True,
 )
 
@@ -413,23 +404,23 @@ st.markdown(
 
 st.markdown(
     """
-    <div class="search-card">
-        <div class="search-title">🔎 Busque su nombre o apellido</div>
-        <div class="search-help">
-            Puede escribir un nombre, un apellido o varias palabras.
-            Por ejemplo: <strong>DIAZ</strong>, <strong>MARCO</strong>
-            o <strong>MARCO DIAZ</strong>.
-        </div>
-    </div>
-    """,
+<div class="search-card">
+<div class="search-title">🔎 Propietario o beneficiario</div>
+<div class="search-help">
+Escriba un nombre o apellido. El campo permite buscar dentro de la lista de propietarios y beneficiarios.
+</div>
+</div>
+""",
     unsafe_allow_html=True,
 )
 
-busqueda = st.text_input(
-    "Buscar",
+nombre_seleccionado = st.selectbox(
+    "Propietario o beneficiario",
+    options=nombres,
+    index=None,
     placeholder="Escriba aquí el nombre o apellido...",
     label_visibility="collapsed",
-    key="buscador_principal",
+    key="propietario",
 )
 
 # ============================================================
@@ -438,88 +429,82 @@ busqueda = st.text_input(
 
 st.markdown(
     """
-    <div class="notice">
-        📢 <strong>IMPORTANTE:</strong>
-        El valor indicado como devolución
-        <strong>NO será entregado en efectivo</strong>.
-        Este valor será aplicado por la Alcaldía Municipal
-        como abono al impuesto predial correspondiente
-        a la vigencia 2027.
-    </div>
-    """,
+<div class="notice">
+📢 <strong>IMPORTANTE:</strong>
+El valor indicado como devolución <strong>NO será entregado en efectivo</strong>.
+Este valor será aplicado por la Alcaldía Municipal como abono al impuesto
+predial correspondiente a la vigencia 2027.
+</div>
+""",
     unsafe_allow_html=True,
 )
 
 # ============================================================
-# PRIVACIDAD
+# BASE JURÍDICA DE LA MEDIDA
+# ============================================================
+
+resolucion = Path("RESOLUCION_146_2026.pdf")
+
+st.markdown(
+    """
+<div class="legal-card">
+<div class="legal-kicker">Documento de respaldo</div>
+<div class="legal-title">📄 Resolución No. 146 de 2026</div>
+<div class="legal-text">
+La consulta se relaciona con la medida administrativa adoptada por la Alcaldía
+Municipal de Concepción frente a un error material en la parametrización de la
+fórmula de cálculo del Impuesto Predial Unificado para la vigencia fiscal 2026.
+La resolución establece la compensación de los valores pagados en exceso mediante
+un abono al impuesto predial correspondiente a la vigencia 2027.
+</div>
+<div class="legal-meta"><strong>Fecha:</strong> 30 de junio de 2026 · <strong>Entidad:</strong> Alcaldía Municipal de Concepción, Santander</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
+if resolucion.exists():
+    with open(resolucion, "rb") as archivo_pdf:
+        st.download_button(
+            "📥 Descargar Resolución No. 146 de 2026",
+            data=archivo_pdf.read(),
+            file_name="Resolucion_146_de_2026.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+else:
+    st.warning("El documento de respaldo no está disponible en este momento.")
+
+with st.expander("📌 ¿Qué establece la Resolución 146 de 2026?"):
+    st.markdown(
+        """
+- Reconoce formalmente un **error material en la parametrización de la fórmula de cálculo** del Impuesto Predial Unificado aplicado en el municipio para la vigencia fiscal 2026.
+- Dispone la **compensación de los valores pagados en exceso** mediante su aplicación como abono al impuesto predial de la vigencia 2027.
+- Ordena a las dependencias municipales correspondientes identificar los propietarios afectados y adelantar los procedimientos administrativos necesarios.
+- El documento contiene, en sus páginas anexas, el listado de predios, propietarios y valores de devolución asociados a la medida.
+
+**Fuente:** Resolución No. 146 de 2026, Alcaldía Municipal de Concepción, Santander.
+"""
+    )
+
+# ============================================================
+# DATOS PERSONALES
 # ============================================================
 
 with st.expander("🔒 Información sobre el tratamiento de datos personales"):
     st.write(
         """
-        La información presentada en esta herramienta corresponde
-        a registros relacionados con la consulta del impuesto predial.
+La información presentada en esta herramienta corresponde a registros
+relacionados con la consulta del impuesto predial.
 
-        El tratamiento de la información deberá realizarse conforme
-        a las normas aplicables sobre protección de datos personales
-        y acceso a la información pública.
+El tratamiento de la información deberá realizarse conforme a las normas
+aplicables sobre protección de datos personales y acceso a la información
+pública.
 
-        La información presentada deberá utilizarse únicamente para
-        fines relacionados con la consulta del saldo a favor.
-        """
+La información presentada deberá utilizarse únicamente para fines
+relacionados con la consulta del saldo a favor.
+"""
     )
-
-# ============================================================
-# VARIABLES DE RESULTADO
-# ============================================================
-
-nombre_seleccionado = None
-coincidencias = []
-
-# ============================================================
-# BÚSQUEDA
-# ============================================================
-
-if busqueda.strip():
-
-    coincidencias = [
-        nombre
-        for nombre in sorted(
-            df["NOMBRE"].drop_duplicates().tolist(),
-            key=lambda x: normalizar(x)
-        )
-        if coincide_por_palabras(nombre, busqueda)
-    ]
-
-    if not coincidencias:
-        st.warning(
-            "No encontramos personas que coincidan con su búsqueda. "
-            "Revise la escritura e intente nuevamente."
-        )
-
-    elif len(coincidencias) == 1:
-        nombre_seleccionado = coincidencias[0]
-
-    else:
-        st.markdown(
-            '<div class="results-head">Personas encontradas</div>',
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            f'<div class="results-count">'
-            f'Se encontraron {len(coincidencias)} coincidencias. '
-            f'Seleccione la persona que desea consultar.'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-        nombre_seleccionado = st.selectbox(
-            "Seleccione el nombre",
-            options=coincidencias,
-            index=0,
-            key="persona_resultado",
-        )
 
 # ============================================================
 # RESULTADO
@@ -535,115 +520,47 @@ if nombre_seleccionado:
 
     porcentaje = (
         total_devolucion / total_pagado
-        if total_pagado > 0
-        else 0
+        if total_pagado > 0 else 0
     )
 
     st.markdown(
         f"""
-        <div class="selected-person">
-            <div class="selected-label">Resultado de la consulta</div>
-            <div class="selected-name">{nombre_seleccionado}</div>
-        </div>
-        """,
+<div class="result-banner">
+<div class="result-label">Resultado de la consulta</div>
+<div class="result-name">{nombre_seleccionado}</div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
-    # --------------------------------------------------------
-    # MÉTRICAS
-    # --------------------------------------------------------
-
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
 
     with c1:
-        st.markdown(
-            f"""
-            <div class="pa-metric pa-metric-blue pa-metric-red">
-                <div class="pa-metric-label">Valor pagado</div>
-                <div class="pa-metric-value">{dinero(total_pagado)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.metric("💵 Valor pagado", dinero(total_pagado))
 
     with c2:
-        st.markdown(
-            f"""
-            <div class="pa-metric pa-metric-orange pa-metric-red">
-                <div class="pa-metric-label">Valor que debía cobrarse</div>
-                <div class="pa-metric-value">{dinero(total_debio)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with c3:
-        st.markdown(
-            f"""
-            <div class="pa-metric pa-metric-green">
-                <div class="pa-metric-label">Saldo a favor para 2027</div>
-                <div class="pa-metric-value">{dinero(total_devolucion)}</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # --------------------------------------------------------
-    # PORCENTAJE
-    # --------------------------------------------------------
+        st.metric("📋 Valor que debía cobrarse", dinero(total_debio))
 
     st.markdown(
         f"""
-        <div style="
-            background:#ffffff;
-            border:1px solid #e0e7ed;
-            border-radius:12px;
-            padding:17px 20px;
-            margin-top:16px;
-            box-shadow:0 3px 12px rgba(31,61,84,.05);
-        ">
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                margin-bottom:9px;
-            ">
-                <span style="
-                    color:#6f7e89;
-                    font-size:12px;
-                    font-weight:800;
-                    text-transform:uppercase;
-                ">
-                    Porcentaje de devolución
-                </span>
-                <strong style="
-                    color:#174f7a;
-                    font-size:20px;
-                ">
-                    {porcentaje:.2%}
-                </strong>
-            </div>
-            <div style="
-                height:8px;
-                background:#e8eef3;
-                border-radius:10px;
-                overflow:hidden;
-            ">
-                <div style="
-                    width:{min(max(porcentaje * 100, 0), 100):.2f}%;
-                    height:100%;
-                    background:#23844d;
-                    border-radius:10px;
-                "></div>
-            </div>
-        </div>
-        """,
+<div class="saldo-card">
+<div class="saldo-label">💰 Saldo a favor para 2027</div>
+<div class="saldo-value">{dinero(total_devolucion)}</div>
+<div class="saldo-note">Valor registrado para ser aplicado como abono al impuesto predial de la vigencia 2027.</div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
-    # --------------------------------------------------------
-    # DETALLE
-    # --------------------------------------------------------
+    st.markdown(
+        '<div class="section-title">📊 Porcentaje de devolución</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.progress(
+        min(max(porcentaje, 0), 1),
+        text=f"{porcentaje:.2%}",
+    )
 
     st.markdown(
         '<div class="section-title">📄 Detalle de la información</div>',
@@ -651,9 +568,7 @@ if nombre_seleccionado:
     )
 
     st.markdown(
-        '<div class="section-subtitle">'
-        'Registros asociados al beneficiario consultado.'
-        '</div>',
+        '<div class="section-help">Registros asociados al propietario o beneficiario consultado.</div>',
         unsafe_allow_html=True,
     )
 
@@ -680,9 +595,7 @@ if nombre_seleccionado:
     )
 
     tabla["Valor pagado"] = tabla["Valor pagado"].apply(dinero)
-    tabla["Valor que debía cobrarse"] = (
-        tabla["Valor que debía cobrarse"].apply(dinero)
-    )
+    tabla["Valor que debía cobrarse"] = tabla["Valor que debía cobrarse"].apply(dinero)
     tabla["Saldo a favor"] = tabla["Saldo a favor"].apply(dinero)
 
     st.dataframe(
@@ -691,29 +604,25 @@ if nombre_seleccionado:
         hide_index=True,
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CORREO
-    # --------------------------------------------------------
+    # ========================================================
 
     st.markdown(
         """
-        <div class="email-card">
-            <div class="email-title">
-                📧 ¿Necesita recibir esta información?
-            </div>
-            <div class="email-text">
-                Puede solicitar una copia de la información consultada
-                directamente a la Personería Municipal.
-            </div>
-        </div>
-        """,
+<div class="email-card">
+<div class="email-title">📧 ¿Necesita recibir esta información?</div>
+<div class="email-text">
+Puede solicitar una copia de la información consultada directamente
+a la Personería Municipal.
+</div>
+</div>
+""",
         unsafe_allow_html=True,
     )
 
-    correo_contacto = "personeria@concepcion-santander.gov.co"
-
+    correo = "personeria@concepcion-santander.gov.co"
     asunto = f"Solicitud de información - {nombre_seleccionado}"
-
     cuerpo = f"""Buen día,
 
 Solicito una copia de la información consultada en la herramienta de saldo a favor del impuesto predial.
@@ -723,25 +632,21 @@ Nombre: {nombre_seleccionado}
 Gracias.
 """
 
-    enlace_correo = (
-        "mailto:"
-        + correo_contacto
-        + "?subject="
-        + urllib.parse.quote(asunto)
-        + "&body="
-        + urllib.parse.quote(cuerpo)
+    enlace = (
+        "mailto:" + correo
+        + "?subject=" + urllib.parse.quote(asunto)
+        + "&body=" + urllib.parse.quote(cuerpo)
     )
 
     st.link_button(
         "📧 Solicitar información por correo",
-        enlace_correo,
+        enlace,
         use_container_width=True,
     )
 
     st.info(
-        "ℹ️ El saldo a favor indicado en esta consulta corresponde "
-        "al valor registrado y será aplicado como abono al impuesto "
-        "predial correspondiente a la vigencia 2027."
+        "ℹ️ El saldo a favor indicado en esta consulta corresponde al valor registrado "
+        "y será aplicado como abono al impuesto predial correspondiente a la vigencia 2027."
     )
 
 # ============================================================
@@ -750,10 +655,10 @@ Gracias.
 
 st.markdown(
     """
-    <div class="footer">
-        <strong>Personería al Día</strong><br>
-        Herramienta de consulta ciudadana · Concepción, Santander
-    </div>
-    """,
+<div class="footer">
+<strong>Personería al Día</strong><br>
+Herramienta de consulta ciudadana · Concepción, Santander
+</div>
+""",
     unsafe_allow_html=True,
 )
