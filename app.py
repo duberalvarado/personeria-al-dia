@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import html
 import unicodedata
 import urllib.parse
 from pathlib import Path
@@ -17,33 +18,222 @@ st.set_page_config(
 
 # ============================================================
 # ESTILOS
+# ------------------------------------------------------------
+# Tema CLARO fijo. Los colores del tema están en .streamlit/config.toml,
+# pero aquí se fijan también de forma explícita para que la app se vea
+# igual aunque el navegador tenga modo oscuro o un tema oscuro guardado
+# en caché (Streamlit guarda la preferencia en localStorage y esta tiene
+# prioridad sobre config.toml).
+#
+# Paleta:
+#   Fondo general      #f4f7fa
+#   Texto principal    #173f61
+#   Azul institucional #174f7a
+#   Verde              #23844d
 # ============================================================
 
 st.markdown(
-r"""
+    r"""
 <style>
-    .stApp {
-        background:
-            radial-gradient(circle at 8% 0%, rgba(35,132,77,.09), transparent 27%),
-            radial-gradient(circle at 92% 0%, rgba(23,79,122,.12), transparent 30%),
-            linear-gradient(180deg, #edf4f8 0%, #f8fafc 48%, #eef4f8 100%);
-    }
-   .main .block-container {
+/* ---------- 1. Base: esquema claro y color de texto global ---------- */
+:root { color-scheme: light; }
+
+html, body, .stApp {
+    background-color: #f4f7fa;
+    color: #173f61;
+}
+
+.stApp {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(35,132,77,.09), transparent 27%),
+        radial-gradient(circle at 92% 0%, rgba(23,79,122,.12), transparent 30%),
+        linear-gradient(180deg, #edf4f8 0%, #f8fafc 48%, #eef4f8 100%);
+}
+
+/* Barra superior de Streamlit transparente (en modo oscuro se ve negra) */
+header[data-testid="stHeader"] {
+    background: transparent;
+}
+
+/* Texto de markdown nativo (st.markdown, st.write, contenido de expanders) */
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li,
+[data-testid="stMarkdownContainer"] ol,
+[data-testid="stMarkdownContainer"] ul {
+    color: #173f61;
+}
+
+/* Contenedor principal */
+[data-testid="stMainBlockContainer"],
+.main .block-container {
     max-width: 1160px;
     padding: 28px 28px 55px 28px;
 }
+
 #MainMenu, footer { visibility: hidden; }
 
+/* ---------- 2. Buscador (st.selectbox) ----------
+   Se cubren las dos estructuras internas que ha usado Streamlit:
+   - versiones recientes: React Aria  ([role="group"], [role="combobox"])
+   - versiones anteriores: BaseWeb    ([data-baseweb="select"])           */
+div[data-testid="stSelectbox"] [role="group"],
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background-color: #ffffff !important;
+    border: 2px solid #d5e0e8 !important;
+    border-radius: 12px !important;
+    min-height: 48px !important;
+    box-shadow: 0 4px 14px rgba(31,61,84,.05);
+}
+div[data-testid="stSelectbox"] [role="group"]:focus-within,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within {
+    border-color: #174f7a !important;
+    box-shadow: 0 0 0 3px rgba(23,79,122,.12) !important;
+}
+/* Texto escrito y valor seleccionado */
+div[data-testid="stSelectbox"] input,
+div[data-testid="stSelectbox"] [role="group"] *,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+    color: #173f61 !important;
+    -webkit-text-fill-color: #173f61 !important;
+    background-color: transparent;
+}
+div[data-testid="stSelectbox"] input {
+    font-size: 15px !important;
+}
+/* Placeholder */
+div[data-testid="stSelectbox"] input::placeholder {
+    color: #6b7f90 !important;
+    -webkit-text-fill-color: #6b7f90 !important;
+    opacity: 1 !important;
+}
+/* Iconos (flecha, borrar) */
+div[data-testid="stSelectbox"] svg {
+    fill: #174f7a !important;
+    color: #174f7a !important;
+}
+
+/* Lista desplegable: se dibuja fuera de .stApp (capa flotante) */
+[data-testid="stSelectboxVirtualDropdown"],
+[data-testid="stSelectboxVirtualDropdown"] [role="listbox"],
+div[data-baseweb="popover"] > div,
+div[data-baseweb="popover"] ul[role="listbox"] {
+    background-color: #ffffff !important;
+    border-color: #d5e0e8 !important;
+}
+[data-testid="stSelectboxVirtualDropdown"] [role="option"],
+div[data-baseweb="popover"] [role="option"] {
+    background-color: #ffffff !important;
+    color: #173f61 !important;
+}
+[data-testid="stSelectboxVirtualDropdown"] [role="option"] *,
+[data-testid="stSelectboxVirtualDropdown"] *,
+div[data-baseweb="popover"] [role="option"] * {
+    color: #173f61 !important;
+    -webkit-text-fill-color: #173f61 !important;
+}
+/* Opción resaltada (mouse o teclado) */
+[data-testid="stSelectboxVirtualDropdown"] [role="option"][data-focused],
+[data-testid="stSelectboxVirtualDropdown"] [role="option"][data-hovered],
+[data-testid="stSelectboxVirtualDropdown"] [role="option"]:hover,
+[data-testid="stSelectboxVirtualDropdown"] [role="option"][aria-selected="true"],
+div[data-baseweb="popover"] [role="option"]:hover,
+div[data-baseweb="popover"] [role="option"][aria-selected="true"] {
+    background-color: #e6eff6 !important;
+}
+
+/* ---------- 3. Botones (descarga y enlace de correo) ---------- */
+[data-testid="stDownloadButton"] button,
+[data-testid="stLinkButton"] a,
+.stButton > button {
+    background-color: #174f7a !important;
+    border: 1px solid #174f7a !important;
+    border-radius: 10px !important;
+    min-height: 44px !important;
+}
+[data-testid="stDownloadButton"] button,
+[data-testid="stDownloadButton"] button *,
+[data-testid="stLinkButton"] a,
+[data-testid="stLinkButton"] a *,
+.stButton > button,
+.stButton > button * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 750 !important;
+}
+[data-testid="stDownloadButton"] button:hover,
+[data-testid="stLinkButton"] a:hover,
+.stButton > button:hover {
+    background-color: #123f63 !important;
+    border-color: #123f63 !important;
+}
+
+/* ---------- 4. Expanders ---------- */
+div[data-testid="stExpander"] details {
+    background-color: #ffffff !important;
+    border: 1px solid #dce5ec !important;
+    border-radius: 12px !important;
+}
+div[data-testid="stExpander"] summary {
+    background-color: #ffffff !important;
+    color: #173f61 !important;
+    border-radius: 12px;
+}
+div[data-testid="stExpander"] summary:hover {
+    background-color: #f0f5f9 !important;
+}
+div[data-testid="stExpander"] summary *,
+div[data-testid="stExpanderDetails"],
+div[data-testid="stExpanderDetails"] * {
+    color: #173f61 !important;
+}
+div[data-testid="stExpander"] summary svg {
+    fill: #174f7a !important;
+}
+
+/* ---------- 5. Mensajes (st.info, st.warning, st.error) ---------- */
+div[data-testid="stAlert"] > div {
+    background-color: #e8f1f8 !important;
+    border: 1px solid #c8dbe9 !important;
+    border-radius: 12px !important;
+}
+div[data-testid="stAlert"],
+div[data-testid="stAlert"] * {
+    color: #174f7a !important;
+}
+
+/* ---------- 6. Barra de progreso ---------- */
+div[data-testid="stProgress"] p,
+div[data-testid="stProgress"] [data-testid="stMarkdownContainer"] p {
+    color: #173f61 !important;
+    font-weight: 700;
+}
+div[data-testid="stProgress"] [role="progressbar"] > div {
+    background-color: #dfe8ef !important;
+}
+div[data-testid="stProgress"] [role="progressbar"] > div > div {
+    background-color: #23844d !important;
+}
+
+/* ---------- 7. Tabla ---------- */
+div[data-testid="stDataFrame"] {
+    border: 1px solid #dfe7ed;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+/* ---------- 8. Componentes HTML propios ---------- */
 .brand-bar {
     background: linear-gradient(115deg, #123f63 0%, #1d638b 68%, #23844d 100%);
     border-radius: 18px;
     padding: 20px 24px;
-    color: white;
+    color: #ffffff;
     box-shadow: 0 12px 30px rgba(23,79,122,.16);
     margin-bottom: 24px;
 }
-.brand-title { font-size: 24px; font-weight: 800; line-height: 1.1; }
-.brand-subtitle { font-size: 13px; opacity: .9; margin-top: 5px; }
+.brand-title { font-size: 24px; font-weight: 800; line-height: 1.1; color: #ffffff; }
+.brand-subtitle { font-size: 13px; margin-top: 5px; color: #e6eef5; }
 
 .hero {
     background: rgba(255,255,255,.92);
@@ -67,14 +257,14 @@ r"""
     margin-top: 5px;
 }
 .hero-text {
-    color: #647583;
+    color: #50636f;
     font-size: 15px;
     line-height: 1.55;
     margin-top: 7px;
 }
 
 .search-card {
-    background: white;
+    background: #ffffff;
     border: 1px solid #dbe5ec;
     border-radius: 16px;
     padding: 20px 22px 16px 22px;
@@ -87,21 +277,9 @@ r"""
     font-weight: 800;
 }
 .search-help {
-    color: #7a8792;
+    color: #5f707c;
     font-size: 13px;
     margin-top: 4px;
-}
-
-div[data-testid="stSelectbox"] > div > div {
-    border-radius: 12px !important;
-    border: 2px solid #d5e0e8 !important;
-    background: #fbfdff !important;
-    min-height: 48px !important;
-    box-shadow: 0 4px 14px rgba(31,61,84,.05);
-}
-div[data-testid="stSelectbox"] > div > div:focus-within {
-    border-color: #2877a9 !important;
-    box-shadow: 0 0 0 3px rgba(40,119,169,.11) !important;
 }
 
 .notice {
@@ -115,10 +293,11 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     font-size: 13px;
     margin: 18px 0;
 }
+.notice strong { color: #5a4515; }
 
 .result-banner {
     background: linear-gradient(115deg, #174f7a 0%, #1e648d 100%);
-    color: white;
+    color: #ffffff;
     border-radius: 16px;
     padding: 19px 22px;
     box-shadow: 0 9px 24px rgba(23,79,122,.15);
@@ -128,12 +307,39 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 1px;
-    opacity: .78;
+    color: #d6e4ef;
 }
 .result-name {
     font-size: 23px;
     font-weight: 850;
     margin-top: 4px;
+    color: #ffffff;
+}
+
+/* Métricas propias (reemplazan st.metric) */
+.metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.metric-card {
+    background: #174f7a;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 22px rgba(23,79,122,.16);
+}
+.metric-label {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+.metric-value {
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: 850;
+    margin-top: 6px;
+    line-height: 1.15;
+    word-break: break-word;
 }
 
 .saldo-card {
@@ -159,7 +365,7 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     margin-top: 4px;
 }
 .saldo-note {
-    color: #688073;
+    color: #4f6b5c;
     font-size: 12px;
     margin-top: 4px;
 }
@@ -171,12 +377,11 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     margin: 27px 0 4px 0;
 }
 .section-help {
-    color: #7a8792;
+    color: #5f707c;
     font-size: 13px;
     margin-bottom: 10px;
 }
 
-/* Base jurídica */
 .legal-card {
     background: linear-gradient(135deg, #f3f8fc 0%, #ffffff 100%);
     border: 1px solid #d5e2eb;
@@ -184,6 +389,7 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     border-radius: 15px;
     padding: 19px 21px;
     margin-top: 26px;
+    margin-bottom: 12px;
     box-shadow: 0 7px 20px rgba(31,61,84,.05);
 }
 .legal-kicker {
@@ -200,16 +406,17 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     margin-top: 4px;
 }
 .legal-text {
-    color: #5f707c;
+    color: #50636f;
     font-size: 13px;
     line-height: 1.55;
     margin-top: 7px;
 }
 .legal-meta {
-    color: #6e7e89;
+    color: #5f707c;
     font-size: 12px;
     margin-top: 9px;
 }
+.legal-meta strong { color: #173f61; }
 
 .email-card {
     background: linear-gradient(135deg, #eef8f2 0%, #f9fcfa 100%);
@@ -218,6 +425,7 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     border-radius: 14px;
     padding: 18px 20px;
     margin-top: 24px;
+    margin-bottom: 12px;
 }
 .email-title {
     color: #1e7043;
@@ -225,71 +433,31 @@ div[data-testid="stSelectbox"] > div > div:focus-within {
     font-weight: 800;
 }
 .email-text {
-    color: #63766a;
+    color: #4f6b5c;
     font-size: 13px;
     line-height: 1.5;
     margin-top: 4px;
 }
 
-.stButton > button, .stLinkButton > a {
-    border-radius: 10px !important;
-    font-weight: 750 !important;
-    min-height: 44px !important;
-}
-
-div[data-testid="stMetric"] {
-    background: rgba(255,255,255,.94);
-    border: 1px solid #dfe7ed;
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: 0 6px 18px rgba(31,61,84,.055);
-}
-
-div[data-testid="stDataFrame"] {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-div[data-testid="stExpander"] {
-    border-radius: 12px !important;
-    border-color: #dce5ec !important;
-    background: rgba(255,255,255,.78);
-}
-
 .footer {
     text-align: center;
-    color: #87939c;
+    color: #5f707c;
     font-size: 12px;
     border-top: 1px solid #dfe6ec;
     padding-top: 20px;
     margin-top: 38px;
 }
+.footer strong { color: #173f61; }
 
+/* ---------- 9. Móvil ---------- */
 @media (max-width: 700px) {
+    [data-testid="stMainBlockContainer"],
     .main .block-container { padding: 14px 14px 35px 14px; }
     .hero { padding: 23px 19px 20px 19px; }
     .hero-title { font-size: 28px; }
     .brand-bar { padding: 16px 18px; }
-}/* FIX VISIBILIDAD METRICAS */
-div[data-testid="stMetricLabel"] {
-    color: #173f61 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-div[data-testid="stMetricValue"] {
-    color: #173f61 !important;
-    -webkit-text-fill-color: #173f61 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    font-weight: 800 !important;
-}
-
-div[data-testid="stMetricValue"] * {
-    color: #173f61 !important;
-    -webkit-text-fill-color: #173f61 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+    .metric-grid { grid-template-columns: 1fr; }
+    .metric-value { font-size: 26px; }
 }
 </style>
 """,
@@ -490,7 +658,7 @@ if resolucion.exists():
             data=archivo_pdf.read(),
             file_name="Resolucion_146_de_2026.pdf",
             mime="application/pdf",
-            use_container_width=True,
+            width="stretch",
         )
 else:
     st.warning("El documento de respaldo no está disponible en este momento.")
@@ -547,19 +715,27 @@ if nombre_seleccionado:
         f"""
 <div class="result-banner">
 <div class="result-label">Resultado de la consulta</div>
-<div class="result-name">{nombre_seleccionado}</div>
+<div class="result-name">{html.escape(nombre_seleccionado)}</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.metric("💵 Valor pagado", dinero(total_pagado))
-
-    with c2:
-        st.metric("📋 Valor que debía cobrarse", dinero(total_debio))
+    st.markdown(
+        f"""
+<div class="metric-grid">
+<div class="metric-card">
+<div class="metric-label">💵 Valor pagado</div>
+<div class="metric-value">{dinero(total_pagado)}</div>
+</div>
+<div class="metric-card">
+<div class="metric-label">📋 Valor que debía cobrarse</div>
+<div class="metric-value">{dinero(total_debio)}</div>
+</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         f"""
@@ -620,7 +796,7 @@ if nombre_seleccionado:
 
     st.dataframe(
         tabla,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -661,7 +837,7 @@ Gracias.
     st.link_button(
         "📧 Solicitar información por correo",
         enlace,
-        use_container_width=True,
+        width="stretch",
     )
 
     st.info(
