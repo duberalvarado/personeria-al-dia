@@ -179,50 +179,53 @@ st.markdown("""
         margin-top: 4px;
     }
 
-    /* Métricas */
-    .metric {
-        background: white;
-        border: 1px solid #e0e7ed;
-        border-radius: 12px;
-        padding: 18px;
-        min-height: 112px;
-        box-shadow: 0 3px 12px rgba(31, 61, 84, .05);
-    }
-
-    .metric-green {
-        border-top: 4px solid #23844d;
-    }
-
-    .metric-blue {
-        border-top: 4px solid #2877a9;
-    }
-
-    .metric-orange {
-        border-top: 4px solid #e0a62a;
-    }
-
-    .metric-label {
-        color: #74828d !important;
-        background: transparent !important;
-        -webkit-text-fill-color: #74828d !important;
-        font-size: 11px;
-        text-transform: uppercase;
-        font-weight: 800;
-        letter-spacing: .4px;
-    }
-
-    .metric-value {
+    /* Métricas - estilos aislados para evitar conflictos con Streamlit */
+    .pa-metric {
+        background: #ffffff !important;
+        border: 1px solid #e0e7ed !important;
+        border-radius: 12px !important;
+        padding: 18px !important;
+        min-height: 112px !important;
+        box-shadow: 0 3px 12px rgba(31, 61, 84, .05) !important;
         color: #173f61 !important;
+    }
+
+    .pa-metric-blue {
+        border-top: 4px solid #2877a9 !important;
+    }
+
+    .pa-metric-orange {
+        border-top: 4px solid #e0a62a !important;
+    }
+
+    .pa-metric-green {
+        border-top: 4px solid #23844d !important;
+    }
+
+    .pa-metric .pa-metric-label,
+    .pa-metric .pa-metric-value {
+        opacity: 1 !important;
+        visibility: visible !important;
         background: transparent !important;
+        text-shadow: none !important;
+    }
+
+    .pa-metric .pa-metric-label {
+        color: #52616d !important;
+        -webkit-text-fill-color: #52616d !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        font-weight: 800 !important;
+        letter-spacing: .4px !important;
+    }
+
+    .pa-metric .pa-metric-value {
+        color: #173f61 !important;
         -webkit-text-fill-color: #173f61 !important;
-        font-size: 23px;
-        font-weight: 800;
-        margin-top: 7px;
-    }
-
-    .metric {
-        color: #173f61 !important;
-        -webkit-text-fill-color: initial;
+        font-size: 23px !important;
+        font-weight: 800 !important;
+        margin-top: 7px !important;
+        line-height: 1.2 !important;
     }
 
     /* Secciones */
@@ -555,9 +558,9 @@ if nombre_seleccionado:
     with c1:
         st.markdown(
             f"""
-            <div class="metric metric-blue">
-                <div class="metric-label">Valor pagado</div>
-                <div class="metric-value">{dinero(total_pagado)}</div>
+            <div class="pa-metric pa-metric-blue">
+                <div class="pa-metric-label">Valor pagado</div>
+                <div class="pa-metric-value">{dinero(total_pagado)}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -566,9 +569,9 @@ if nombre_seleccionado:
     with c2:
         st.markdown(
             f"""
-            <div class="metric metric-orange">
-                <div class="metric-label">Valor que debía cobrarse</div>
-                <div class="metric-value">{dinero(total_debio)}</div>
+            <div class="pa-metric pa-metric-orange">
+                <div class="pa-metric-label">Valor que debía cobrarse</div>
+                <div class="pa-metric-value">{dinero(total_debio)}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -577,9 +580,9 @@ if nombre_seleccionado:
     with c3:
         st.markdown(
             f"""
-            <div class="metric metric-green">
-                <div class="metric-label">Saldo a favor para 2027</div>
-                <div class="metric-value">{dinero(total_devolucion)}</div>
+            <div class="pa-metric pa-metric-green">
+                <div class="pa-metric-label">Saldo a favor para 2027</div>
+                <div class="pa-metric-value">{dinero(total_devolucion)}</div>
             </div>
             """,
             unsafe_allow_html=True,
