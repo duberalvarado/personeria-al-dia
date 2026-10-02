@@ -558,7 +558,7 @@ if nombre_seleccionado:
     with c1:
         st.markdown(
             f"""
-            <div class="pa-metric pa-metric-blue">
+            <div class="pa-metric pa-metric-blue pa-metric-red">
                 <div class="pa-metric-label">Valor pagado</div>
                 <div class="pa-metric-value">{dinero(total_pagado)}</div>
             </div>
@@ -569,7 +569,7 @@ if nombre_seleccionado:
     with c2:
         st.markdown(
             f"""
-            <div class="pa-metric pa-metric-orange">
+            <div class="pa-metric pa-metric-orange pa-metric-red">
                 <div class="pa-metric-label">Valor que debía cobrarse</div>
                 <div class="pa-metric-value">{dinero(total_debio)}</div>
             </div>
