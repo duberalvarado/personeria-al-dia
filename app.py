@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
+import hmac
 import html
+import os
+import sqlite3
 import unicodedata
 import urllib.parse
+from contextlib import closing
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # ============================================================
@@ -449,6 +454,19 @@ div[data-testid="stDataFrame"] {
 }
 .footer strong { color: #173f61; }
 
+/* Contador de visitas (pie de página) */
+.footer-visits {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 14px;
+    background: #e8f1f8;
+    border: 1px solid #c8dbe9;
+    border-radius: 999px;
+    color: #174f7a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
 /* ---------- 9. Móvil ---------- */
 @media (max-width: 700px) {
     [data-testid="stMainBlockContainer"],
@@ -525,6 +543,79 @@ def dinero(valor):
     return f"${valor:,.0f}".replace(",", ".")
 
 
+
+# ============================================================
+# CONTADOR DE VISITAS
+# ------------------------------------------------------------
+# Guarda por día el número de visitas (una por sesión de navegador)
+# y de consultas realizadas. NO guarda nombres ni datos personales.
+#
+# En Render el conteo se guarda en el disco persistente montado en
+# /var/data. Sin ese disco, el conteo funciona pero se reinicia en
+# cada despliegue.
+# ============================================================
+
+ZONA_COLOMBIA = timezone(timedelta(hours=-5))
+
+
+def _ruta_contador():
+    ruta = os.environ.get("CONTADOR_DB")
+    if ruta:
+        return Path(ruta)
+    disco = Path("/var/data")
+    if disco.is_dir():
+        return disco / "contador.db"
+    return Path("contador.db")
+
+
+RUTA_CONTADOR = _ruta_contador()
+
+
+def _conexion():
+    con = sqlite3.connect(RUTA_CONTADOR, timeout=10)
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS conteo ("
+        "fecha TEXT PRIMARY KEY, "
+        "visitas INTEGER NOT NULL DEFAULT 0, "
+        "consultas INTEGER NOT NULL DEFAULT 0)"
+    )
+    return con
+
+
+def registrar(campo):
+    if campo not in ("visitas", "consultas"):
+        return
+    hoy = datetime.now(ZONA_COLOMBIA).strftime("%Y-%m-%d")
+    try:
+        with closing(_conexion()) as con, con:
+            con.execute(
+                "INSERT INTO conteo (fecha) VALUES (?) "
+                "ON CONFLICT(fecha) DO NOTHING",
+                (hoy,),
+            )
+            con.execute(
+                f"UPDATE conteo SET {campo} = {campo} + 1 WHERE fecha = ?",
+                (hoy,),
+            )
+    except sqlite3.Error:
+        pass
+
+
+def leer_conteo():
+    try:
+        with closing(_conexion()) as con:
+            return con.execute(
+                "SELECT fecha, visitas, consultas FROM conteo "
+                "ORDER BY fecha DESC"
+            ).fetchall()
+    except sqlite3.Error:
+        return []
+
+
+def numero(valor):
+    return f"{valor:,.0f}".replace(",", ".")
+
+
 # ============================================================
 # DATOS
 # ============================================================
@@ -543,6 +634,14 @@ nombres = sorted(
     df["NOMBRE"].drop_duplicates().tolist(),
     key=lambda x: normalizar(x)
 )
+
+# ============================================================
+# REGISTRO DE VISITA (una vez por sesión)
+# ============================================================
+
+if "visita_registrada" not in st.session_state:
+    st.session_state["visita_registrada"] = True
+    registrar("visitas")
 
 # ============================================================
 # ENCABEZADO
@@ -700,6 +799,10 @@ relacionados con la consulta del saldo a favor.
 
 if nombre_seleccionado:
 
+    if st.session_state.get("ultima_consulta") != nombre_seleccionado:
+        st.session_state["ultima_consulta"] = nombre_seleccionado
+        registrar("consultas")
+
     resultados = df[df["NOMBRE"] == nombre_seleccionado].copy()
 
     total_pagado = resultados["VALOR_PAGADO"].sum()
@@ -846,14 +949,82 @@ Gracias.
     )
 
 # ============================================================
+# ESTADÍSTICAS PRIVADAS
+# ------------------------------------------------------------
+# Solo se muestran al abrir la app con ?estadisticas=CLAVE, donde
+# CLAVE es la variable de entorno STATS_CLAVE configurada en Render.
+# ============================================================
+
+conteo = leer_conteo()
+total_visitas = sum(fila[1] for fila in conteo)
+total_consultas = sum(fila[2] for fila in conteo)
+
+clave_configurada = os.environ.get("STATS_CLAVE", "")
+clave_recibida = st.query_params.get("estadisticas", "")
+
+if clave_configurada and hmac.compare_digest(
+    str(clave_recibida), clave_configurada
+):
+    hoy = datetime.now(ZONA_COLOMBIA).strftime("%Y-%m-%d")
+    visitas_hoy = next((f[1] for f in conteo if f[0] == hoy), 0)
+    consultas_hoy = next((f[2] for f in conteo if f[0] == hoy), 0)
+
+    st.markdown(
+        '<div class="section-title">📈 Estadísticas de uso</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""
+<div class="metric-grid">
+<div class="metric-card">
+<div class="metric-label">👁️ Visitas totales</div>
+<div class="metric-value">{numero(total_visitas)}</div>
+</div>
+<div class="metric-card">
+<div class="metric-label">🔎 Consultas totales</div>
+<div class="metric-value">{numero(total_consultas)}</div>
+</div>
+<div class="metric-card">
+<div class="metric-label">📅 Visitas hoy</div>
+<div class="metric-value">{numero(visitas_hoy)}</div>
+</div>
+<div class="metric-card">
+<div class="metric-label">📅 Consultas hoy</div>
+<div class="metric-value">{numero(consultas_hoy)}</div>
+</div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    if conteo:
+        st.markdown(
+            '<div class="section-help" style="margin-top:14px;">'
+            "Detalle por día (hora de Colombia).</div>",
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            pd.DataFrame(conteo, columns=["Fecha", "Visitas", "Consultas"]),
+            width="stretch",
+            hide_index=True,
+        )
+
+    if not str(RUTA_CONTADOR).startswith("/var/data"):
+        st.warning(
+            "El contador no está usando el disco persistente (/var/data). "
+            "Los datos se reiniciarán en el próximo despliegue."
+        )
+
+# ============================================================
 # PIE
 # ============================================================
 
 st.markdown(
-    """
+    f"""
 <div class="footer">
 <strong>Personería al Día</strong><br>
-Herramienta de consulta ciudadana · Concepción, Santander
+Herramienta de consulta ciudadana · Concepción, Santander<br>
+<span class="footer-visits">👁️ {numero(total_visitas)} visitas</span>
 </div>
 """,
     unsafe_allow_html=True,
