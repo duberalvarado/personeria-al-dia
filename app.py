@@ -22,13 +22,13 @@ st.set_page_config(
 st.markdown(
 r"""
 <style>
-.stApp {
-    background:
-        radial-gradient(circle at 8% 0%, rgba(35,132,77,.09), transparent 27%),
-        radial-gradient(circle at 92% 0%, rgba(23,79,122,.12), transparent 30%),
-        linear-gradient(180deg, #edf4f8 0%, #f8fafc 48%, #eef4f8 100%);
-}
-.main .block-container {
+    .stApp {
+        background:
+            radial-gradient(circle at 8% 0%, rgba(35,132,77,.09), transparent 27%),
+            radial-gradient(circle at 92% 0%, rgba(23,79,122,.12), transparent 30%),
+            linear-gradient(180deg, #edf4f8 0%, #f8fafc 48%, #eef4f8 100%);
+    }
+   .main .block-container {
     max-width: 1160px;
     padding: 28px 28px 55px 28px;
 }
@@ -270,6 +270,26 @@ div[data-testid="stExpander"] {
     .hero { padding: 23px 19px 20px 19px; }
     .hero-title { font-size: 28px; }
     .brand-bar { padding: 16px 18px; }
+}/* FIX VISIBILIDAD METRICAS */
+div[data-testid="stMetricLabel"] {
+    color: #173f61 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #173f61 !important;
+    -webkit-text-fill-color: #173f61 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    font-weight: 800 !important;
+}
+
+div[data-testid="stMetricValue"] * {
+    color: #173f61 !important;
+    -webkit-text-fill-color: #173f61 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 </style>
 """,
